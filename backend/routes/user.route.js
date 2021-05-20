@@ -77,13 +77,23 @@ router.post("/login", async (req, res, next) => {
 });
 
 router.get("/", async (req, res, next) => {
-  const user = await User.findById(req.user);
-  if (!user) {
-    res.json({ msg: "User doesn't exist" });
+  const users = await User.find();
+  if (!users) {
+    res.json({ msg: "No users" });
   }
   res.json({
-    msg: "Hi there",
+    users: users,
   });
 });
+
+// router.get("/", async (req, res, next) => {
+//   const user = await User.findById(req.user);
+//   if (!user) {
+//     res.json({ msg: "User doesn't exist" });
+//   }
+//   res.json({
+//     msg: "Hi there",
+//   });
+// });
 
 module.exports = router;
