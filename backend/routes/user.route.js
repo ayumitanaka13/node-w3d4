@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const User = require("../models/user.model");
 
@@ -63,8 +64,11 @@ router.post("/login", async (req, res, next) => {
       return res.status(400).json({ msg: "Invalid credentials" });
     }
 
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SIGN);
+
     res.json({
       msg: `${user.displayName} has logged in`,
+      token: token,
       user: {
         id: user._id,
         email: user.email,
@@ -76,13 +80,31 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
-router.get("/", async (req, res, next) => {
-  const users = await User.find();
-  if (!users) {
-    res.json({ msg: "No users" });
+router.post("tokenIsValid", async (req, res, next) => {
+  try {
+    const token = req.header("x-auth-token");
+    if (!token) {
+      return res.json(false);
+    }
+    const verified = jwt.verify(token, process.env.JWT_SIGN);
+    if (!verified) {
+      return res.json(false);
+    }
+    const user = await User.findById(verified.id);
+    if (!user) {
+      return res.json(false);
+    }
+    return res.json(true);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
+});
+
+router.get("/", async (req, res, next) => {
+  const user = await User.findById(req.user);
   res.json({
-    users: users,
+    displayName: user.displayName,
+    id: user._id,
   });
 });
 

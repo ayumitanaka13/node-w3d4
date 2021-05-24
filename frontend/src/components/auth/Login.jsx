@@ -1,17 +1,18 @@
-import axios from "axios";
 import React, { useContext, useEffect, useState } from "react";
+import { useHistory } from "react-router";
 
 import UserContext from "../../context/userContext";
+import ErrorNotice from "../ErrorNotice";
+import axios from "axios";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState();
 
   const { setUserData } = useContext(UserContext);
 
-  //   useEffect(() => {
-  //     console.log(userData);
-  //   }, [userData]);
+  const history = useHistory();
 
   const submit = async (e) => {
     e.preventDefault();
@@ -22,16 +23,22 @@ const Login = () => {
         "http://localhost:8080/users/login",
         loginUser
       );
-      setUserData(loginRes.data.user);
+      setUserData({ user: loginRes.data.user, token: loginRes.data.token });
+
+      localStorage.setItem("auth-token", loginRes.data.token)
+      history.push("/");
     } catch (err) {
       console.log(err.response.data.msg);
     }
   };
 
   return (
-    <div>
+    <div className="page">
       <h2>Login</h2>
-      <form onSubmit={submit}>
+      {error && (
+        <ErrorNotice message={error} clearError={() => setError(undefined)} />
+      )}
+      <form className="form" onSubmit={submit}>
         <label htmlFor="login-email">Email</label>
         <input
           type="email"
